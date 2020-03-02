@@ -2,25 +2,25 @@ from snake_game import SnakeGame
 from random import randint
 import numpy as np
 import tflearn
-import math
 from tflearn.layers.core import input_data, fully_connected
 from tflearn.layers.estimator import regression
 from statistics import mean
 from collections import Counter
 
+
 class SnakeNN:
-    def __init__(self, initial_games = 100, test_games = 100, goal_steps = 100, lr = 1e-2, filename = 'snake_nn.tflearn'):
+    def __init__(self, initial_games=100, test_games=100, goal_steps=100, lr=1e-2, filename='snake_nn.tflearn'):
         self.initial_games = initial_games
         self.test_games = test_games
         self.goal_steps = goal_steps
         self.lr = lr
         self.filename = filename
         self.vectors_and_keys = [
-                [[-1, 0], 0],
-                [[0, 1], 1],
-                [[1, 0], 2],
-                [[0, -1], 3]
-                ]
+            [[-1, 0], 0],
+            [[0, 1], 1],
+            [[1, 0], 2],
+            [[0, -1], 3]
+        ]
 
     def initial_population(self):
         training_data = []
@@ -30,7 +30,7 @@ class SnakeNN:
             prev_observation = self.generate_observation(snake)
             for _ in range(self.goal_steps):
                 action, game_action = self.generate_action(snake)
-                done, _, snake, _  = game.step(game_action)
+                done, _, snake, _ = game.step(game_action)
                 if done:
                     training_data.append([self.add_action_to_observation(prev_observation, action), 0])
                     break
@@ -41,7 +41,7 @@ class SnakeNN:
         return training_data
 
     def generate_action(self, snake):
-        action = randint(0,2) - 1
+        action = randint(0, 2) - 1
         return action, self.get_game_action(snake, action)
 
     def get_game_action(self, snake, action):
@@ -89,7 +89,7 @@ class SnakeNN:
     def train_model(self, training_data, model):
         X = np.array([i[0] for i in training_data]).reshape(-1, 4, 1)
         y = np.array([i[1] for i in training_data]).reshape(-1, 1)
-        model.fit(X,y, n_epoch = 1, shuffle = True, run_id = self.filename)
+        model.fit(X, y, n_epoch=1, shuffle=True, run_id=self.filename)
         model.save(self.filename)
         return model
 
@@ -104,10 +104,11 @@ class SnakeNN:
             for _ in range(self.goal_steps):
                 predictions = []
                 for action in range(-1, 2):
-                   predictions.append(model.predict(self.add_action_to_observation(prev_observation, action).reshape(-1, 4, 1)))
+                    predictions.append(
+                        model.predict(self.add_action_to_observation(prev_observation, action).reshape(-1, 4, 1)))
                 action = np.argmax(np.array(predictions))
                 game_action = self.get_game_action(snake, action - 1)
-                done, _, snake, _  = game.step(game_action)
+                done, _, snake, _ = game.step(game_action)
                 game_memory.append([prev_observation, action])
                 if done:
                     break
@@ -115,20 +116,21 @@ class SnakeNN:
                     prev_observation = self.generate_observation(snake)
                     steps += 1
             steps_arr.append(steps)
-        print('Average steps:',mean(steps_arr))
+        print('Average steps:', mean(steps_arr))
         print(Counter(steps_arr))
 
     def visualise_game(self, model):
-        game = SnakeGame(gui = True)
+        game = SnakeGame(gui=True)
         _, _, snake, _ = game.start()
         prev_observation = self.generate_observation(snake)
         for _ in range(self.goal_steps):
             predictions = []
             for action in range(-1, 2):
-               predictions.append(model.predict(self.add_action_to_observation(prev_observation, action).reshape(-1, 4, 1)))
+                predictions.append(
+                    model.predict(self.add_action_to_observation(prev_observation, action).reshape(-1, 4, 1)))
             action = np.argmax(np.array(predictions))
             game_action = self.get_game_action(snake, action - 1)
-            done, _, snake, _  = game.step(game_action)
+            done, _, snake, _ = game.step(game_action)
             if done:
                 break
             else:
@@ -150,5 +152,6 @@ class SnakeNN:
         nn_model.load(self.filename)
         self.test_model(nn_model)
 
+
 if __name__ == "__main__":
-    SnakeNN().train()
+    SnakeNN().visualise()
